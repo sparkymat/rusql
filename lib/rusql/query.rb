@@ -4,6 +4,7 @@ module Rusql
     attr_reader :joins
     attr_reader :from_table
     attr_reader :condition
+    attr_reader :orders
 
     def initialize(selectors)
       selectors.each do |selector|
@@ -12,6 +13,17 @@ module Rusql
 
       @selectors = selectors
       @joins = []
+      @orders = []
+    end
+
+    def select(*selectors)
+      selectors.each do |selector|
+        raise TypeException.new(Selector, selector.class) unless selector.is_a?(Selector)
+      end
+
+      @selectors = selectors
+
+      self
     end
 
     def from(t)
@@ -36,9 +48,20 @@ module Rusql
       self
     end
 
+    def order_by(*orders)
+      orders.each do |o|
+        raise TypeException.new(Order, o.class) unless o.is_a?(Order)
+      end
+
+      @orders = orders
+
+      self
+    end
+
     def to_s
       join_part = self.joins.map{ |j| "\n#{j.to_s}" }.join
       where_part = "\nWHERE"
+      order_part = "\nORDER BY #{ self.orders.map(&:to_s).join(", ") }"
 
       if self.condition.is_a?(BasicCondition)
         where_part += " "
@@ -51,7 +74,7 @@ module Rusql
       <<-EOS
 SELECT
 #{ self.selectors.map{ |s| "  #{s.to_s}" }.join(",\n") }
-FROM #{ self.from_table.to_s_for_aliasing }#{ (self.joins.length > 0) ? join_part : ""  }#{ self.condition.nil? ? "" : where_part }
+FROM #{ self.from_table.to_s_for_aliasing }#{ (self.joins.length > 0) ? join_part : ""  }#{ self.condition.nil? ? "" : where_part }#{ self.orders.length > 0 ? order_part : "" }
       EOS
     end
   end

@@ -1,10 +1,13 @@
 module Rusql
   class Selector
-    typed_attr_accessor :table, Table
-    typed_attr_accessor :name, Symbol
+    typed_attr_accessor :alias, Symbol
 
-    def to_s
-      "#{self.table.to_s}.#{name}"
+    def as(a)
+      raise TypeException.new(Symbol, a.class) unless a.is_a?(Symbol)
+
+      @alias = a
+
+      self
     end
   end
 end

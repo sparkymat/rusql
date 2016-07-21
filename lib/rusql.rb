@@ -1,4 +1,5 @@
 require "rusql/version"
+require "rusql/type_exception"
 
 class Class
   def typed_attr_accessor(name, type)
@@ -34,6 +35,26 @@ module Rusql
     ConvertTzFunctionOperand.new(value, from, to)
   end
 
+  def distinct(sel)
+    raise TypeException.new(Selector, sel.class) unless sel.is_a?(Selector) || sel.is_a?(Column)
+    final_sel = sel.is_a?(Column) ? sel.as_selector : self
+    DistinctFunctionSelector.new(final_sel.to_s)
+  end
+
+  def group_concat(sel)
+    raise TypeException.new(Selector, sel.class) unless sel.is_a?(Selector)
+    GroupConcatFunctionSelector.new(sel.to_s)
+  end
+
+  def count(col)
+    raise TypeException.new(Column, col.class) unless col.is_a?(Column)
+    CountSelector.new(col.to_s)
+  end
+
+  def count_all
+    CountSelector.new("*")
+  end
+
   def table(name)
     t = Table.new
     t.name = name
@@ -53,6 +74,8 @@ require "rusql/operand"
 require "rusql/table"
 require "rusql/column"
 require "rusql/selector"
+require "rusql/column_selector"
+require "rusql/count_selector"
 require "rusql/query"
 require "rusql/join"
 require "rusql/convert_tz_function_operand"
@@ -60,3 +83,6 @@ require "rusql/date_function_operand"
 require "rusql/condition"
 require "rusql/basic_condition"
 require "rusql/complex_condition"
+require "rusql/order"
+require "rusql/distinct_function_selector"
+require "rusql/group_concat_function_selector"
