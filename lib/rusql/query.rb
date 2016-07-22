@@ -5,6 +5,7 @@ module Rusql
     attr_reader :from_table
     attr_reader :condition
     attr_reader :orders
+    attr_reader :limit
 
     def initialize(selectors)
       selectors.each do |selector|
@@ -26,6 +27,14 @@ module Rusql
       self
     end
 
+    def limit(c)
+      raise TypeException unless c.is_a?(Fixnum)
+
+      @limit = c
+
+      self
+    end
+
     def from(t)
       raise TypeException unless t.is_a?(Table)
 
@@ -34,8 +43,26 @@ module Rusql
       self
     end
 
-    def inner_join(from,to)
-      self.joins << Join.new(:inner_join, from, to)
+    def inner_join(table,condition)
+      self.joins << Join.new(:inner_join, table, condition)
+
+      self
+    end
+
+    def outer_join(table,condition)
+      self.joins << Join.new(:outer_join, table, condition)
+
+      self
+    end
+
+    def left_outer_join(table,condition)
+      self.joins << Join.new(:left_outer_join, table, condition)
+
+      self
+    end
+
+    def right_outer_join(table,condition)
+      self.joins << Join.new(:right_outer_join, table, condition)
 
       self
     end

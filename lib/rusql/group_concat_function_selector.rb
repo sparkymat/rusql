@@ -9,7 +9,7 @@ module Rusql
     def to_s
       str = "GROUP_CONCAT(#{ self.field })"
       unless self.alias.nil?
-        str += " AS self.alias#{}"
+        str += " AS #{self.alias}"
       end
       str
     end
