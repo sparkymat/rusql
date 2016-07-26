@@ -20,7 +20,7 @@ Or install it yourself as:
 
 Sample code:
 
-````
+```ruby
 class User < ActiveRecord::Base
     extend Rusql
 
@@ -45,7 +45,7 @@ class User < ActiveRecord::Base
         User.find_by_sql( query.to_s ).first
     end
 end
-````
+```
 
 ## Contributing
 
