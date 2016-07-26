@@ -62,6 +62,22 @@ module Rusql
     t
   end
 
+  def inner_join(table,condition)
+    Join.new(:inner_join, table, condition)
+  end
+
+  def outer_join(table,condition)
+    Join.new(:outer_join, table, condition)
+  end
+
+  def left_outer_join(table,condition)
+    Join.new(:left_outer_join, table, condition)
+  end
+
+  def right_outer_join(table,condition)
+    Join.new(:right_outer_join, table, condition)
+  end
+
   def select(*opts)
     opts.each do |arg|
       raise TypeException.new(Selector, arg.class) unless arg.is_a?(Selector) || arg.is_a?(Column)
