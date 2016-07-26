@@ -19,7 +19,7 @@ def convert_value(v)
     "'#{v}'"
   when Date
     v.strftime("'%Y-%m-%d'")
-  when DateTime
+  when DateTime, Time
     v.strftime("'%Y-%m-%d %H:%M:%S'")
   else
     v.to_s
