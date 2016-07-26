@@ -8,12 +8,14 @@ module Rusql
       @selectors = selectors
       @joins = []
       @orders = []
+      @group_by = nil
     end
 
     def duplicate
       new_one = Query.new(self.instance_variable_get(:@selectors))
       new_one.instance_variable_set( :@condition,  self.instance_variable_get(:@condition)  )
       new_one.instance_variable_set( :@from_table, self.instance_variable_get(:@from_table) )
+      new_one.instance_variable_set( :@group_by,   self.instance_variable_get(:@group_by)   )
       new_one.instance_variable_set( :@joins,      self.instance_variable_get(:@joins)      )
       new_one.instance_variable_set( :@limit,      self.instance_variable_get(:@limit)      )
       new_one.instance_variable_set( :@orders,     self.instance_variable_get(:@orders)     )
@@ -46,6 +48,15 @@ module Rusql
 
       new_one = self.duplicate
       new_one.instance_variable_set(:@from_table, t)
+
+      new_one
+    end
+
+    def group_by(c)
+      raise TypeException.new(Column, c.class) unless c.is_a?(Column)
+
+      new_one = self.duplicate
+      new_one.instance_variable_set(:@group_by, c)
 
       new_one
     end
@@ -96,6 +107,7 @@ module Rusql
       join_part = @joins.map{ |j| "\n#{j.to_s}" }.join
       where_part = "\nWHERE"
       order_part = "\nORDER BY #{ @orders.map(&:to_s).join(", ") }"
+      group_by_part = "\nGROUP BY #{ @group_by&.to_s }"
 
       if @condition.is_a?(BasicCondition)
         where_part += " "
@@ -108,7 +120,7 @@ module Rusql
       <<-EOS
 SELECT
 #{ @selectors.map{ |s| "  #{s.to_s}" }.join(",\n") }
-FROM #{ @from_table.to_s_for_aliasing }#{ (@joins.length > 0) ? join_part : ""  }#{ @condition.nil? ? "" : where_part }#{ @orders.length > 0 ? order_part : "" }
+FROM #{ @from_table.to_s_for_aliasing }#{ (@joins.length > 0) ? join_part : ""  }#{ @condition.nil? ? "" : where_part }#{ @orders.length > 0 ? order_part : "" }#{ @group_by.nil? ? "" : group_by_part }
       EOS
     end
   end
