@@ -1,12 +1,5 @@
 module Rusql
   class Query
-    attr_reader :selectors
-    attr_reader :joins
-    attr_reader :from_table
-    attr_reader :condition
-    attr_reader :orders
-    attr_reader :limit
-
     def initialize(selectors)
       selectors.each do |selector|
         raise TypeException.new(Selector, selector.class) unless selector.is_a?(Selector)
@@ -17,62 +10,75 @@ module Rusql
       @orders = []
     end
 
+    def duplicate
+      new_one = Query.new(self.instance_variable_get(:@selectors))
+      new_one.instance_variable_set( :@condition,  self.instance_variable_get(:@condition)  )
+      new_one.instance_variable_set( :@from_table, self.instance_variable_get(:@from_table) )
+      new_one.instance_variable_set( :@joins,      self.instance_variable_get(:@joins)      )
+      new_one.instance_variable_set( :@limit,      self.instance_variable_get(:@limit)      )
+      new_one.instance_variable_set( :@orders,     self.instance_variable_get(:@orders)     )
+
+      new_one
+    end
+
     def select(*selectors)
       selectors.each do |selector|
         raise TypeException.new(Selector, selector.class) unless selector.is_a?(Selector)
       end
 
-      @selectors = selectors
+      new_one = self.duplicate
+      new_one.instance_variable_set(:@selectors, selectors)
 
-      self
+      new_one
     end
 
     def limit(c)
-      raise TypeException unless c.is_a?(Fixnum)
+      raise TypeException.new(Fixnum, c.class) unless c.is_a?(Fixnum)
 
-      @limit = c
+      new_one = self.duplicate
+      new_one.instance_variable_set(:@limit, c)
 
-      self
+      new_one
     end
 
     def from(t)
-      raise TypeException unless t.is_a?(Table)
+      raise TypeException.new(Table, t.class) unless t.is_a?(Table)
 
-      @from_table = t
+      new_one = self.duplicate
+      new_one.instance_variable_set(:@from_table, t)
 
-      self
+      new_one
     end
 
-    def inner_join(table,condition)
-      self.joins << Join.new(:inner_join, table, condition)
+    def join(join)
+      raise TypeException.new(Join, join.class) unless join.is_a?(Join)
 
-      self
+      new_one = self.duplicate
+      joins = new_one.instance_variable_get(:@joins)
+      joins << join
+      new_one.instance_variable_set(:@joins, joins)
+
+      new_one
     end
 
-    def outer_join(table,condition)
-      self.joins << Join.new(:outer_join, table, condition)
+    %i(inner_join outer_join left_outer_join right_outer_join).each do |jm|
+      define_method jm, Proc.new { |table, condition|
+        new_one = self.duplicate
+        joins = new_one.instance_variable_get(:@joins)
+        joins << Join.new(jm, table, condition)
+        new_one.instance_variable_set(:@joins, joins)
 
-      self
-    end
-
-    def left_outer_join(table,condition)
-      self.joins << Join.new(:left_outer_join, table, condition)
-
-      self
-    end
-
-    def right_outer_join(table,condition)
-      self.joins << Join.new(:right_outer_join, table, condition)
-
-      self
+        new_one
+      }
     end
 
     def where(condition)
       raise TypeException.new(Condition, condition.class) unless condition.is_a?(Condition)
 
-      @condition = condition
+      new_one = self.duplicate
+      new_one.instance_variable_set(:@condition, condition)
 
-      self
+      new_one
     end
 
     def order_by(*orders)
@@ -80,28 +86,29 @@ module Rusql
         raise TypeException.new(Order, o.class) unless o.is_a?(Order)
       end
 
-      @orders = orders
+      new_one = self.duplicate
+      new_one.instance_variable_set(:@orders, orders)
 
-      self
+      new_one
     end
 
     def to_s
-      join_part = self.joins.map{ |j| "\n#{j.to_s}" }.join
+      join_part = @joins.map{ |j| "\n#{j.to_s}" }.join
       where_part = "\nWHERE"
-      order_part = "\nORDER BY #{ self.orders.map(&:to_s).join(", ") }"
+      order_part = "\nORDER BY #{ @orders.map(&:to_s).join(", ") }"
 
-      if self.condition.is_a?(BasicCondition)
+      if @condition.is_a?(BasicCondition)
         where_part += " "
-        where_part += self.condition.to_s
-      elsif self.condition.is_a?(ComplexCondition)
+        where_part += @condition.to_s
+      elsif @condition.is_a?(ComplexCondition)
         where_part += "\n  "
-        where_part += self.condition.to_s
+        where_part += @condition.to_s
       end
 
       <<-EOS
 SELECT
-#{ self.selectors.map{ |s| "  #{s.to_s}" }.join(",\n") }
-FROM #{ self.from_table.to_s_for_aliasing }#{ (self.joins.length > 0) ? join_part : ""  }#{ self.condition.nil? ? "" : where_part }#{ self.orders.length > 0 ? order_part : "" }
+#{ @selectors.map{ |s| "  #{s.to_s}" }.join(",\n") }
+FROM #{ @from_table.to_s_for_aliasing }#{ (@joins.length > 0) ? join_part : ""  }#{ @condition.nil? ? "" : where_part }#{ @orders.length > 0 ? order_part : "" }
       EOS
     end
   end
