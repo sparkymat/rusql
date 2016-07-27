@@ -15,7 +15,7 @@ module Rusql
 
       raise Exception.new("Expected type to be one of #{ TYPES.map(&:to_s).join(",") }") unless TYPES.include?(type)
       raise TypeException.new(Table, table.class) if final_table.nil?
-      raise TypeException.new(BasicCondition, condition.class) unless condition.is_a?(BasicCondition)
+      raise TypeException.new(Condition, condition.class) unless condition.is_a?(Condition)
 
       @type = type
       @table = final_table
@@ -23,7 +23,7 @@ module Rusql
     end
 
     def to_s
-      "#{ self.type.to_s.upcase.gsub("_"," ") } #{self.table.to_s_for_aliasing} ON #{self.condition.to_s}"
+      "#{ self.type.to_s.upcase.gsub("_"," ") } #{self.table.to_s_for_aliasing} ON #{self.condition.to_s(multiline: false) }"
     end
   end
 end

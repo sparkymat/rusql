@@ -56,10 +56,14 @@ module Rusql
       new_condition
     end
 
-    def to_s(indent_level: 1)
-      indent = "  "*indent_level
-      indent_out = "  "*(indent_level-1)
-      "(\n" + indent + self.conditions.map{ |c| c.to_s(indent_level: indent_level+1) }.join("\n#{indent}#{self.type.to_s.upcase} ") + "\n#{indent_out})"
+    def to_s(indent_level: 1, multiline: true)
+      if multiline
+        indent = "  "*indent_level
+        indent_out = "  "*(indent_level-1)
+        "(\n" + indent + self.conditions.map{ |c| c.to_s(indent_level: indent_level+1, multiline: true) }.join("\n#{indent}#{self.type.to_s.upcase} ") + "\n#{indent_out})"
+      else
+        self.conditions.map{ |c| c.to_s(indent_level: indent_level, multiline: multiline) }.join(" #{self.type.to_s.upcase} ")
+      end
     end
   end
 end

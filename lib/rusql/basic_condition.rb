@@ -44,10 +44,14 @@ module Rusql
       c
     end
 
-    def to_s(indent_level: 1) # to make it compatible with complex condition to_s
+    def to_s(indent_level: 1, multiline: true) # dummy params to make it compatible with complex condition to_s
       case self.type
       when :equals
-        "#{left.to_s} = #{convert_value(self.right)}"
+        if self.right.nil?
+          "#{left.to_s} IS NULL" 
+        else
+          "#{left.to_s} = #{convert_value(self.right)}"
+        end
       when :greater_than
         "#{left.to_s} > #{convert_value(self.right)}"
       when :greater_than_or_equals
@@ -61,7 +65,11 @@ module Rusql
       when :like
         "#{left.to_s} LIKE #{convert_value(self.right)}"
       when :not_equals
-        "#{left.to_s} != #{convert_value(self.right)}"
+        if self.right.nil?
+          "#{left.to_s} IS NOT NULL"
+        else
+          "#{left.to_s} != #{convert_value(self.right)}"
+        end
       when :not_in
         "#{left.to_s} NOT IN (#{ self.right.map{|v| convert_value(v) }.join(", ") })"
       end
