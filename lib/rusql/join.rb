@@ -11,12 +11,14 @@ module Rusql
     )
 
     def initialize(type, table, condition)
+      final_table = table.is_a?(Table) ? table : ( table.respond_to?(:as_rusql_table) ? table.as_rusql_table : nil )
+
       raise Exception.new("Expected type to be one of #{ TYPES.map(&:to_s).join(",") }") unless TYPES.include?(type)
-      raise TypeException.new(Table, table.class) unless table.is_a?(Table)
+      raise TypeException.new(Table, table.class) if final_table.nil?
       raise TypeException.new(BasicCondition, condition.class) unless condition.is_a?(BasicCondition)
 
       @type = type
-      @table = table
+      @table = final_table
       @condition = condition
     end
 

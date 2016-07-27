@@ -44,10 +44,12 @@ module Rusql
     end
 
     def from(t)
-      raise TypeException.new(Table, t.class) unless t.is_a?(Table)
+      # so that we can have ActiveRecord hacks :/ 
+      final_table = t.is_a?(Table) ? t : ( t.respond_to?(:as_rusql_table) ? t.as_rusql_table : nil )
+      raise TypeException.new(Table, t.class) if final_table.nil?
 
       new_one = self.duplicate
-      new_one.instance_variable_set(:@from_table, t)
+      new_one.instance_variable_set(:@from_table, final_table)
 
       new_one
     end
