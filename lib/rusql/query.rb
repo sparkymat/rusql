@@ -113,7 +113,7 @@ module Rusql
         where_part += " "
         where_part += @condition.to_s
       elsif @condition.is_a?(ComplexCondition)
-        where_part += "\n  "
+        where_part += " "
         where_part += @condition.to_s
       end
 

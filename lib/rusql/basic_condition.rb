@@ -23,7 +23,7 @@ module Rusql
     end
 
     def and(condition)
-      raise Exception.new(Condition, condition.class) unless condition.is_a?(Condition)
+      raise TypeException.new(Condition, condition.class) unless condition.is_a?(Condition)
 
       c = ComplexCondition.new
       c.type = :and
@@ -33,7 +33,18 @@ module Rusql
       c
     end
 
-    def to_s(indent: " ") # to make it compatible with complex condition to_s
+    def or(condition)
+      raise TypeException.new(Condition, condition.class) unless condition.is_a?(Condition)
+
+      c = ComplexCondition.new
+      c.type = :or
+      c.add_condition(self)
+      c.add_condition(condition)
+
+      c
+    end
+
+    def to_s(indent_level: 1) # to make it compatible with complex condition to_s
       case self.type
       when :equals
         "#{left.to_s} = #{convert_value(self.right)}"
